@@ -27,6 +27,7 @@ import { PrimusAdapter } from "@elizaos/plugin-primus";
 import { lightningPlugin } from "@elizaos/plugin-lightning";
 import { elizaCodeinPlugin, onchainJson } from "@elizaos/plugin-iq6900";
 import { dcapPlugin } from "@elizaos/plugin-dcap";
+
 import {
     AgentRuntime,
     CacheManager,
@@ -35,7 +36,6 @@ import {
     type Client,
     Clients,
     DbCacheAdapter,
-    defaultCharacter,
     elizaLogger,
     FsCacheAdapter,
     type IAgentRuntime,
@@ -157,9 +157,12 @@ import { ankrPlugin } from "@elizaos/plugin-ankr";
 import { formPlugin } from "@elizaos/plugin-form";
 import { MongoClient } from "mongodb";
 import { quickIntelPlugin } from "@elizaos/plugin-quick-intel";
-
 import { trikonPlugin } from "@elizaos/plugin-trikon";
 import arbitragePlugin from "@elizaos/plugin-arbitrage";
+
+
+import { mainCharacter } from "./hadi.character";
+
 const __filename = fileURLToPath(import.meta.url); // get the resolved path to the file
 const __dirname = path.dirname(__filename); // get the name of the directory
 
@@ -171,8 +174,10 @@ export const wait = (minTime = 1000, maxTime = 3000) => {
 
 const logFetch = async (url: string, options: any) => {
     elizaLogger.debug(`Fetching ${url}`);
+    console.log(process.env.IQ_WALLET_ADDRESS)
+    
     // Disabled to avoid disclosure of sensitive information such as API keys
-    // elizaLogger.debug(JSON.stringify(options, null, 2));
+    elizaLogger.debug(JSON.stringify(options, null, 2));
     return fetch(url, options);
 };
 
@@ -349,6 +354,7 @@ async function jsonToCharacter(
             `Merging  ${character.name} character with parent characters`
         );
         for (const extendPath of character.extends) {
+
             const baseCharacter = await loadCharacter(
                 path.resolve(path.dirname(filePath), extendPath)
             );
@@ -483,7 +489,7 @@ export async function loadCharacters(
 
     if (loadedCharacters.length === 0) {
         elizaLogger.info("No characters found, using default character");
-        loadedCharacters.push(defaultCharacter);
+        loadedCharacters.push(mainCharacter);
     }
 
     return loadedCharacters;
@@ -535,7 +541,7 @@ export function getTokenForProvider(
             return "";
         case ModelProviderName.BEDROCK:
             return "";
-        case ModelProviderName.OPENAI:
+        case ModelProviderName.OPENAI:  
             return (
                 character.settings?.secrets?.OPENAI_API_KEY ||
                 settings.OPENAI_API_KEY
@@ -653,11 +659,11 @@ export function getTokenForProvider(
                 character.settings?.secrets?.MISTRAL_API_KEY ||
                 settings.MISTRAL_API_KEY
             );
-        case ModelProviderName.LETZAI:
-            return (
-                character.settings?.secrets?.LETZAI_API_KEY ||
-                settings.LETZAI_API_KEY
-            );
+        // case ModelProviderName.LETZAI:
+        //     return (
+        //         character.settings?.secrets?.LETZAI_API_KEY ||
+        //         settings.LETZAI_API_KEY
+        //     );
         case ModelProviderName.INFERA:
             return (
                 character.settings?.secrets?.INFERA_API_KEY ||
@@ -975,40 +981,40 @@ export async function createAgent(
     // }
     // Initialize Opacity adapter if environment variables are present
     let verifiableInferenceAdapter;
-    if (
-        process.env.OPACITY_TEAM_ID &&
-        process.env.OPACITY_CLOUDFLARE_NAME &&
-        process.env.OPACITY_PROVER_URL &&
-        process.env.VERIFIABLE_INFERENCE_ENABLED === "true"
-    ) {
-        verifiableInferenceAdapter = new OpacityAdapter({
-            teamId: process.env.OPACITY_TEAM_ID,
-            teamName: process.env.OPACITY_CLOUDFLARE_NAME,
-            opacityProverUrl: process.env.OPACITY_PROVER_URL,
-            modelProvider: character.modelProvider,
-            token: token,
-        });
-        elizaLogger.log("Verifiable inference adapter initialized");
-        elizaLogger.log("teamId", process.env.OPACITY_TEAM_ID);
-        elizaLogger.log("teamName", process.env.OPACITY_CLOUDFLARE_NAME);
-        elizaLogger.log("opacityProverUrl", process.env.OPACITY_PROVER_URL);
-        elizaLogger.log("modelProvider", character.modelProvider);
-        elizaLogger.log("token", token);
-    }
-    if (
-        process.env.PRIMUS_APP_ID &&
-        process.env.PRIMUS_APP_SECRET &&
-        process.env.VERIFIABLE_INFERENCE_ENABLED === "true"
-    ) {
-        verifiableInferenceAdapter = new PrimusAdapter({
-            appId: process.env.PRIMUS_APP_ID,
-            appSecret: process.env.PRIMUS_APP_SECRET,
-            attMode: "proxytls",
-            modelProvider: character.modelProvider,
-            token,
-        });
-        elizaLogger.log("Verifiable inference primus adapter initialized");
-    }
+    // if (
+    //     process.env.OPACITY_TEAM_ID &&
+    //     process.env.OPACITY_CLOUDFLARE_NAME &&
+    //     process.env.OPACITY_PROVER_URL &&
+    //     process.env.VERIFIABLE_INFERENCE_ENABLED === "true"
+    // ) {
+    //     verifiableInferenceAdapter = new OpacityAdapter({
+    //         teamId: process.env.OPACITY_TEAM_ID,
+    //         teamName: process.env.OPACITY_CLOUDFLARE_NAME,
+    //         opacityProverUrl: process.env.OPACITY_PROVER_URL,
+    //         modelProvider: character.modelProvider,
+    //         token: token,
+    //     });
+    //     elizaLogger.log("Verifiable inference adapter initialized");
+    //     elizaLogger.log("teamId", process.env.OPACITY_TEAM_ID);
+    //     elizaLogger.log("teamName", process.env.OPACITY_CLOUDFLARE_NAME);
+    //     elizaLogger.log("opacityProverUrl", process.env.OPACITY_PROVER_URL);
+    //     elizaLogger.log("modelProvider", character.modelProvider);
+    //     elizaLogger.log("token", token);
+    // }
+    // if (
+    //     process.env.PRIMUS_APP_ID &&
+    //     process.env.PRIMUS_APP_SECRET &&
+    //     process.env.VERIFIABLE_INFERENCE_ENABLED === "true"
+    // ) {
+    //     verifiableInferenceAdapter = new PrimusAdapter({
+    //         appId: process.env.PRIMUS_APP_ID,
+    //         appSecret: process.env.PRIMUS_APP_SECRET,
+    //         attMode: "proxytls",
+    //         modelProvider: character.modelProvider,
+    //         token,
+    //     });
+    //     elizaLogger.log("Verifiable inference primus adapter initialized");
+    // }
 
     return new AgentRuntime({
         databaseAdapter: db,
@@ -1031,7 +1037,7 @@ export async function createAgent(
             getSecret(character, "IQSOlRPC")
                 ? elizaCodeinPlugin
                 : null,
-            bootstrapPlugin,
+            // bootstrapPlugin,
             getSecret(character, "CDP_API_KEY_NAME") &&
             getSecret(character, "CDP_API_KEY_PRIVATE_KEY") &&
             getSecret(character, "CDP_AGENT_KIT_NETWORK")
@@ -1105,9 +1111,9 @@ export async function createAgent(
             getSecret(character, "NVIDIA_API_KEY") ||
             getSecret(character, "NINETEEN_AI_API_KEY") ||
             getSecret(character, "HEURIST_API_KEY") ||
-            getSecret(character, "LIVEPEER_GATEWAY_URL")
-                ? imageGenerationPlugin
-                : null,
+            // getSecret(character, "LIVEPEER_GATEWAY_URL")
+            //     ? imageGenerationPlugin
+            //     : null,
             getSecret(character, "FAL_API_KEY") ? ThreeDGenerationPlugin : null,
             ...(getSecret(character, "COINBASE_API_KEY") &&
             getSecret(character, "COINBASE_PRIVATE_KEY")
@@ -1193,7 +1199,7 @@ export async function createAgent(
             getSecret(character, "ECHOCHAMBERS_API_KEY")
                 ? echoChambersPlugin
                 : null,
-            getSecret(character, "LETZAI_API_KEY") ? letzAIPlugin : null,
+            // getSecret(character, "LETZAI_API_KEY") ? letzAIPlugin : null,
             getSecret(character, "STARGAZE_ENDPOINT") ? stargazePlugin : null,
             getSecret(character, "GIPHY_API_KEY") ? giphyPlugin : null,
             getSecret(character, "PASSPORT_API_KEY")
@@ -1202,24 +1208,24 @@ export async function createAgent(
             getSecret(character, "GENLAYER_PRIVATE_KEY")
                 ? genLayerPlugin
                 : null,
-            getSecret(character, "AVAIL_SEED") &&
-            getSecret(character, "AVAIL_APP_ID")
-                ? availPlugin
-                : null,
-            getSecret(character, "OPEN_WEATHER_API_KEY")
-                ? openWeatherPlugin
-                : null,
-            getSecret(character, "OBSIDIAN_API_TOKEN") ? obsidianPlugin : null,
-            getSecret(character, "ARTHERA_PRIVATE_KEY")?.startsWith("0x")
-                ? artheraPlugin
-                : null,
-            getSecret(character, "ALLORA_API_KEY") ? alloraPlugin : null,
-            getSecret(character, "HYPERLIQUID_PRIVATE_KEY")
-                ? hyperliquidPlugin
-                : null,
-            getSecret(character, "HYPERLIQUID_TESTNET")
-                ? hyperliquidPlugin
-                : null,
+            // getSecret(character, "AVAIL_SEED") &&
+            // getSecret(character, "AVAIL_APP_ID")
+            //     ? availPlugin
+            //     : null,
+            // getSecret(character, "OPEN_WEATHER_API_KEY")
+            //     ? openWeatherPlugin
+            //     : null,
+            // getSecret(character, "OBSIDIAN_API_TOKEN") ? obsidianPlugin : null,
+            // getSecret(character, "ARTHERA_PRIVATE_KEY")?.startsWith("0x")
+            //     ? artheraPlugin
+            //     : null,
+            // getSecret(character, "ALLORA_API_KEY") ? alloraPlugin : null,
+            // getSecret(character, "HYPERLIQUID_PRIVATE_KEY")
+            //     ? hyperliquidPlugin
+            //     : null,
+            // getSecret(character, "HYPERLIQUID_TESTNET")
+            //     ? hyperliquidPlugin
+            //     : null,
             getSecret(character, "AKASH_MNEMONIC") &&
             getSecret(character, "AKASH_WALLET_ADDRESS")
                 ? akashPlugin
@@ -1266,9 +1272,9 @@ export async function createAgent(
                 ? emailPlugin
                 : null,
             getSecret(character, "SEI_PRIVATE_KEY") ? seiPlugin : null,
-            getSecret(character, "HYPERBOLIC_API_KEY")
-                ? hyperbolicPlugin
-                : null,
+            // getSecret(character, "HYPERBOLIC_API_KEY")
+            //     ? hyperbolicPlugin
+            //     : null,
             getSecret(character, "SUNO_API_KEY") ? sunoPlugin : null,
             getSecret(character, "UDIO_AUTH_TOKEN") ? udioPlugin : null,
             getSecret(character, "IMGFLIP_USERNAME") &&
@@ -1301,10 +1307,12 @@ export async function createAgent(
             getSecret(character, "ARBITRAGE_BUNDLE_EXECUTOR_ADDRESS")
                 ? arbitragePlugin
                 : null,
+            getSecret(character, "THE_GRAPH_API_KEY") &&
             getSecret(character, "DESK_EXCHANGE_PRIVATE_KEY") ||
             getSecret(character, "DESK_EXCHANGE_NETWORK")
                 ? deskExchangePlugin
                 : null,
+            // halal scanner
         ]
             .flat()
             .filter(Boolean),
@@ -1474,22 +1482,8 @@ const hasValidRemoteUrls = () =>
 const startAgents = async () => {
     const directClient = new DirectClient();
     let serverPort = Number.parseInt(settings.SERVER_PORT || "3000");
-    const args = parseArguments();
-    const charactersArg = args.characters || args.character;
-    let characters = [defaultCharacter];
+    let characters = [mainCharacter];
 
-    if (process.env.IQ_WALLET_ADDRESS && process.env.IQSOlRPC) {
-        characters = await loadCharacterFromOnchain();
-    }
-
-    const notOnchainJson = !onchainJson || onchainJson == "null";
-
-    if ((notOnchainJson && charactersArg) || hasValidRemoteUrls()) {
-        characters = await loadCharacters(charactersArg);
-    }
-
-    // Normalize characters for injectable plugins
-    characters = await Promise.all(characters.map(normalizeCharacter));
 
     try {
         for (const character of characters) {
