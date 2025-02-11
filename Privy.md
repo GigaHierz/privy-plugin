@@ -94,6 +94,7 @@ export const mainCharacter = {
     },
 ```
 
+
 ## DevEX Feedback
 
 - Example on the [Create Policy page](https://docs.privy.io/guide/server-wallets/policies/create#example) and update policy has too many commas and is throwing an Invalid JSON error.
